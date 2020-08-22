@@ -96,7 +96,7 @@ func recvPacket(conn *net.UDPConn, readTimeLimit time.Duration, packetsRecvCount
 func main() {
 	// Command line args
 	var portNum = flag.String("port", "40000", "Port number of the server (i.e. 40000)")
-	var wTimeLimit = flag.Int("w_time", 5, "Max number of seconds the connection will wait on a full send queue to free up to send a packet (i.e. 5")
+	var wTimeLimit = flag.Int("w_time", 5, "Max number of seconds the connection will wait on a full send queue to free up to send a packet (i.e. 5)")
 	var rTimeLimit = flag.Int("r_time", 10, "Max number of seconds the server will wait to receive a request from client before closing (i.e. 10)")
 	var chanCap = flag.Int("buffer", 5000, "The max buffer size of the channel used to store received packets that are reflected to client (i.e. 1000)")
 	flag.Parse()
