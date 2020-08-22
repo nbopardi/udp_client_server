@@ -9,16 +9,16 @@ import (
 	"flag"
 )
 
-// Packet struct that contains:
-// 1) a byte slice representing the packet's payload
-// 2) an address from the sender of the packet
-type Packet struct {
-	packet 	[]byte
-	addr 	*net.UDPAddr
+// Packet struct that is used for reflecting a packet back to its sender
+// Packet: a byte slice representing the packet's payload
+// Addr: a UDP address from the sender of the packet
+type PacketStruct struct {
+	Packet 	[]byte
+	Addr 	*net.UDPAddr
 }
 
 // Reflect packets from a channel back to the client
-func reflectPacket(conn *net.UDPConn, writeTimeLimit time.Duration, packetsSentCounter *int, recvOut <-chan Packet, wg *sync.WaitGroup) {
+func reflectPacket(conn *net.UDPConn, writeTimeLimit time.Duration, packetsSentCounter *int, recvOut <-chan PacketStruct, wg *sync.WaitGroup) {
 	// Close wait group when done
 	defer wg.Done()
 
@@ -27,34 +27,34 @@ func reflectPacket(conn *net.UDPConn, writeTimeLimit time.Duration, packetsSentC
 			select {
 			case packet, ok := <- recvOut:
 				// If the channel has been closed and drained, exit the outer loop
-                if !ok {
-                    break reflectLoop
-                } else {
-                    // Set a deadline for how long server should wait to write message
-                   	err := conn.SetWriteDeadline(time.Now().Add(writeTimeLimit))
-                   	if err != nil {
-                   		log.Println("Could not set write deadline for connection: ", err)
-                   	}
+				if !ok {
+					break reflectLoop
+				} else {
+					// Set a deadline for how long server should wait to write message
+					err := conn.SetWriteDeadline(time.Now().Add(writeTimeLimit))
+					if err != nil {
+						log.Println("Could not set write deadline for connection: ", err)
+					}
 
-                   	// Reflect the message back to the client
-                   	_, err = conn.WriteToUDP(packet.packet, packet.addr)
-                   	// Error handling
-                   	if err != nil {
-                   		log.Println("Could not write message to UDP client: ", err)
-                   	} else {
-                   		// Increment the counter for the number of packets sent back
-                   		*packetsSentCounter++
-                   	}
-                }
-            default:
-                // Do nothing
-            }
+					// Reflect the message back to the client
+					_, err = conn.WriteToUDP(packet.Packet, packet.Addr)
+					// Error handling
+					if err != nil {
+						log.Println("Could not write message to UDP client: ", err)
+					} else {
+						// Increment the counter for the number of packets sent back
+						*packetsSentCounter++
+					}
+				}
+			default:
+				// Do nothing
+			}
 		}
 }
 
 // Receives a packet on the UDP connection until no longer receiving a response from a client
 // Sends all packets received to a channel to reflect them back to the client
-func recvPacket(conn *net.UDPConn, readTimeLimit time.Duration, packetsRecvCounter *int, recvIn chan<- Packet, wg *sync.WaitGroup) {
+func recvPacket(conn *net.UDPConn, readTimeLimit time.Duration, packetsRecvCounter *int, recvIn chan<- PacketStruct, wg *sync.WaitGroup) {
 	// Close wait group when done
 	defer wg.Done()
 
@@ -82,7 +82,7 @@ func recvPacket(conn *net.UDPConn, readTimeLimit time.Duration, packetsRecvCount
 				log.Fatal("Could not receive message from UDP client: ", err)
 			} else {
 				// Send packet to channel for reflecting back to client
-				recvIn <- Packet{buffer[:n], addr}
+				recvIn <- PacketStruct{buffer[:n], addr}
 				// Increment the counter for number of packets received
 				*packetsRecvCounter++
 			}
@@ -92,7 +92,7 @@ func recvPacket(conn *net.UDPConn, readTimeLimit time.Duration, packetsRecvCount
 	close(recvIn)
 }
 
-
+// Main function to set up a UDP server that listens and sends back any packets to the client
 func main() {
 	// Command line args
 	var portNum = flag.String("port", "40000", "Port number of the server (i.e. 40000)")
@@ -128,7 +128,7 @@ func main() {
 	writeTimeLimit := (time.Duration(*wTimeLimit) * time.Second)
 
 	// Create channel to hold packets to reflect back to client
-	readChan := make(chan Packet, *chanCap)
+	readChan := make(chan PacketStruct, *chanCap)
 
 	// Create counters for packets sent and received
 	packetsRecvCounter := 0
