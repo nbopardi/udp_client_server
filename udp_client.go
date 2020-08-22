@@ -36,20 +36,19 @@ func sendMessages(conn *net.UDPConn, writeOut chan<- uint32, packetsSentCounter 
                     log.Println("From Send: Time limit reached")
                     break writeLoop
                 }
-                log.Fatal("Could not send messg to server:", err)
+                log.Fatal("Could not send packet to server:", err)
             } else {
                 // Write the packet contents to out channel
                 writeOut <- messgCounter
                 // Increment the packets sent counter
                 *packetsSentCounter++
             }
-            // Increment message counter
+            // Increment the message counter
             messgCounter++
         }
 
     // Close the channel for sending out written packets
     close(writeOut)
-    log.Println("DONE SENDING MESSAGES")
 }
 
 func receiveMessages(conn *net.UDPConn, readTimeLimit time.Duration, recvOut chan<- []byte, wg *sync.WaitGroup) {
@@ -90,7 +89,6 @@ func receiveMessages(conn *net.UDPConn, readTimeLimit time.Duration, recvOut cha
 
     // Close the channel for sending out received packets
     close(recvOut)
-    log.Println("DONE RECEIVING MESSAGES")
 }
 
 func countWritten(writeIn <-chan uint32, set map[uint32]bool, setMutex *sync.RWMutex, wg *sync.WaitGroup) {
@@ -142,12 +140,12 @@ func countWrittenRecv(recvIn <-chan []byte, set map[uint32]bool, setMutex *sync.
                         setMutex.Lock()
                         delete(set, intPacket)
                         setMutex.Unlock()
-
+                        // Increment the packets received counter
                         *packetsRecvCounter++
                     } else {
                         // This condition is hit when the packets have been received, but not yet
                         // recorded in the set
-                        log.Println("Somehow this packet was received yet not recorded as sent: ", intPacket)
+                        // Increment the packets received but not sent counter
                         *packetsRecvButNotSentCounter++
                     }
                 }
@@ -161,15 +159,12 @@ func main() {
     // Command line args
     var hostName = flag.String("host", "localhost", "IPv4 of host to connect to (i.e. 169.254.105.139")
     var portNum = flag.String("port", "40000", "Port number of host to connect to (i.e. 40000)")
-    var cTimeLimit = flag.Int("c_time", 1, "Number of seconds the connection with the server will stay alive for (i.e. 1")
+    var cTimeLimit = flag.Int("c_time", 1, "Number of minutes the connection with the server will stay alive for (i.e. 1")
     var rTimeLimit = flag.Int("r_time", 500, "Max number of milliseconds the client will attempt to spend waiting to read from server (i.e. 500)")
     var chanCap = flag.Int("buffer", 1000, "The max buffer size of the channels used to record packets sent and received (i.e. 1000)")
     flag.Parse()
-    // log.Println(*hostName + ":" + *portNum)
-    // log.Println(strconv.Itoa(*cTimeLimit))
-    // log.Println(strconv.Itoa(*rTimeLimit))
-    // log.Println(strconv.Itoa(*chanCap))
 
+    // Define the address of server
     service := *hostName + ":" + *portNum
     networkName := "udp4"
 
@@ -189,6 +184,7 @@ func main() {
     // Close the connection with done with everything
     defer conn.Close()
 
+    // Log information about connection
     log.Printf("Established connection to %s \n", service)
     log.Printf("Remote UDP address: %s \n", conn.RemoteAddr().String())
     log.Printf("Local UDP client address: %s \n", conn.LocalAddr().String())
@@ -207,10 +203,10 @@ func main() {
     readChan := make(chan []byte, *chanCap)
 
     // Set a time limit for how long the connection will stay alive
-    totalTimeLimit := (time.Duration(*cTimeLimit) * time.Second)
+    totalTimeLimit := (time.Duration(*cTimeLimit) * time.Minute)
     err = conn.SetDeadline(time.Now().Add(totalTimeLimit))
     if err != nil {
-        log.Println("Could not set deadline for connection: ", err)
+        log.Fatal("Could not set deadline for connection: ", err)
     }
 
     // Set a reading time limit for how long to wait for response from server
@@ -227,8 +223,7 @@ func main() {
 
     log.Println("Packets Sent: ", strconv.Itoa(packetsSentCounter))
     log.Println("Packets Received: ", strconv.Itoa(packetsRecvCounter))
-    log.Println("Packets Sent But Not Received: ", len(set))
-    // log.Println(set)
-    log.Println("Packets Received But Not Sent: ", strconv.Itoa(packetsRecvButNotSentCounter))
+    // log.Println("Packets Sent But Not Received: ", len(set))
+    // log.Println("Packets Received But Not Sent: ", strconv.Itoa(packetsRecvButNotSentCounter))
     log.Println("All done!")
 }
