@@ -66,7 +66,8 @@ func receiveMessages(conn *net.UDPConn, readTimeLimit time.Duration, recvOut cha
 	receiveLoop:
 		for {
 			// Create buffer to read packet into
-			buffer := make([]byte, 100)
+			// buffer := make([]byte, 100)
+			buffer := make([]byte, 108)
 
 			// Set a deadline for how long should wait for server response
 			err := conn.SetReadDeadline(time.Now().Add(readTimeLimit))
@@ -134,26 +135,31 @@ func countWrittenRecv(recvIn <-chan []byte, set map[uint32]bool, setMutex *sync.
 				if !ok {
 					break recvLoop
 				} else {
-					// Create uint32 of packet
-					intPacket := binary.LittleEndian.Uint32(packet)
-
-					// Verify received packet is in the set
-					setMutex.RLock()
-					value := set[intPacket]
-					setMutex.RUnlock()
-
-					if value {
-						// Remove it from the set and increment the counter
-						setMutex.Lock()
-						delete(set, intPacket)
-						setMutex.Unlock()
-						// Increment the packets received counter
-						*packetsRecvCounter++
+					// Verify the packet is greater than 100 bytes in length
+					// The fnv1a hash is 8 bytes, which should be appended to the packet's original payload
+					if len(packet) <= 100 {
+						log.Printf("Packet is not 108 in length: %v\n", packet)
 					} else {
-						// This condition is hit when the packets have been received, but not yet
-						// recorded in the set
-						// Increment the packets received but not sent counter
-						*packetsRecvButNotSentCounter++
+						// Create uint32 of packet (take only first 100 bytes of packet for comparison)
+						intPacket := binary.LittleEndian.Uint32(packet[:100])
+						// Verify received packet is in the set
+						setMutex.RLock()
+						value := set[intPacket]
+						setMutex.RUnlock()
+
+						if value {
+							// Remove it from the set and increment the counter
+							setMutex.Lock()
+							delete(set, intPacket)
+							setMutex.Unlock()
+							// Increment the packets received counter
+							*packetsRecvCounter++
+						} else {
+							// This condition is hit when the packets have been received, but not yet
+							// recorded in the set
+							// Increment the packets received but not sent counter
+							*packetsRecvButNotSentCounter++
+						}
 					}
 				}
 			default:
@@ -167,7 +173,7 @@ func main() {
 	// Command line args
 	var hostName = flag.String("host", "localhost", "IPv4 of host to connect to (i.e. 169.254.105.13)")
 	var portNum = flag.String("port", "40000", "Port number of host to connect to (i.e. 40000)")
-	var cTimeLimit = flag.Int("c_time", 10, "Number of minutes the connection with the server will stay alive for (i.e. 1)")
+	var cTimeLimit = flag.Int("c_time", 1, "Number of minutes the connection with the server will stay alive for (i.e. 1)")
 	var rTimeLimit = flag.Int("r_time", 500, "Max number of milliseconds the client will attempt to spend waiting to read from server (i.e. 500)")
 	var chanCap = flag.Int("buffer", 1000, "The max buffer size of the channels used to record packets sent and received (i.e. 1000)")
 	flag.Parse()
@@ -237,5 +243,6 @@ func main() {
 	wg.Wait()
 	log.Println("Packets Sent: ", strconv.Itoa(packetsSentCounter))
 	log.Println("Packets Received: ", strconv.Itoa(packetsRecvCounter))
+	// log.Println("Packets Sent But Not Recv: ", strconv.Itoa(packetsRecvButNotSentCounter))
 	log.Println("All done!")
 }
