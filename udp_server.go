@@ -257,12 +257,12 @@ func main() {
 	var portNum = flag.String("port", "40000", "Port number of the server (i.e. 40000)")
 	var wTimeLimit = flag.Int("w_time", 5, "Max number of seconds the connection will wait on a full send queue to free up to send a packet (i.e. 5)")
 	var rTimeLimit = flag.Int("r_time", 10, "Max number of seconds the server will wait to receive a request from client before closing (i.e. 10)")
-	var numConcurrentJobs = flag.Int("n_jobs", 10000, "Max number of requests made to the HTTP backend occurring at the same time (i.e. 10000)")
+	var numConcurrentJobs = flag.Int("n_jobs", 15000, "Max number of requests made to the HTTP backend occurring at the same time (i.e. 15000)")
 	var expectContTime = flag.Int("ec_time", 4, "Amount of seconds to wait for the HTTP backend's first response headers after fully writing the request headers (i.e. 4)")
     var respHeaderTime = flag.Int("rh_time", 10, "Amount of seconds to wait for the HTTP backend's response headers after fully writing the request and body (i.e. 10)")
     var idleConnTime = flag.Int("ic_time", 10, "Max amount of seconds an idle (keep-alive) connection will remain idle before closing itself (i.e. 10)")
     var idleConnsPerHost = flag.Int("iconn_host", 10000, "Max idle (keep-alive) connections to keep per-host (i.e. 10000)")
-    var chanCap = flag.Int("buffer", 500000, "Max buffer size of the channel used to store received packets that are reflected to client (i.e. 500000)")
+    var chanCap = flag.Int("buffer", 1000000, "Max buffer size of the channel used to store received packets that are reflected to client (i.e. 1000000)")
 	flag.Parse()
 
 	// Define the HTTP backend server address

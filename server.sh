@@ -12,12 +12,12 @@ helpFunction()
 	echo "\t-port Port number of the server (i.e. 40000)"
 	echo "\t-w_time Max number of seconds the connection will wait on a full send queue to free up to send a packet (i.e. 5)"
 	echo "\t-r_time Max number of seconds the server will wait to receive a request from client before closing (i.e. 10)"
-	echo "\t-n_jobs Max number of requests made to the HTTP backend occurring at the same time (i.e. 10000)"
+	echo "\t-n_jobs Max number of requests made to the HTTP backend occurring at the same time (i.e. 15000)"
 	echo "\t-ec_time Amount of seconds to wait for the HTTP backend's first response headers after fully writing the request headers (i.e. 4)"
 	echo "\t-rh_time Amount of seconds to wait for the HTTP backend's response headers after fully writing the request and body (i.e. 10)"
 	echo "\t-ic_time Max amount of seconds an idle (keep-alive) connection will remain idle before closing itself (i.e. 10)"
 	echo "\t-iconn_host Max idle (keep-alive) connections to keep per-host (i.e. 10000)"
-	echo "\t-buffer The max buffer size of the channel used to store received packets that are reflected to client (i.e. 500000)"
+	echo "\t-buffer The max buffer size of the channel used to store received packets that are reflected to client (i.e. 1000000)"
 	exit 1 # Exit script after printing help
 }
 
@@ -28,12 +28,12 @@ b_port=80
 portNum="40000"
 w_time=5
 r_time=10
-n_jobs=10000
+n_jobs=15000
 ec_time=4
 rh_time=10
 ic_time=10
 iconn_host=10000
-buffer=500000
+buffer=1000000
 
 
 if [ $# -eq 0 ] ; then

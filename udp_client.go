@@ -168,7 +168,7 @@ func main() {
 	var hostName = flag.String("host", "localhost", "IPv4 of host to connect to (i.e. 169.254.105.13)")
 	var portNum = flag.String("port", "40000", "Port number of host to connect to (i.e. 40000)")
 	var cTimeLimit = flag.Int("c_time", 1, "Number of minutes the connection with the server will stay alive for (i.e. 1)")
-	var chanCap = flag.Int("buffer", 1000, "The max buffer size of the channels used to record packets sent and received (i.e. 1000)")
+	var chanCap = flag.Int("buffer", 1000000, "The max buffer size of the channels used to record packets sent and received (i.e. 1000000)")
 	flag.Parse()
 
 	// Define the address of server

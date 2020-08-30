@@ -10,7 +10,7 @@ helpFunction()
    echo "\t-host IPv4 of host to connect to (i.e. 169.254.105.13)"
    echo "\t-port Port number of host to connect to (i.e. 40000)"
    echo "\t-c_time Number of minutes the connection with the server will stay alive for (i.e. 10)"
-   echo "\t-buffer The max buffer size of the channels used to record packets sent and received (i.e. 1000)"
+   echo "\t-buffer The max buffer size of the channels used to record packets sent and received (i.e. 1000000)"
    exit 1 # Exit script after printing help
 }
 
@@ -19,7 +19,7 @@ helpFunction()
 hostName="localhost"
 portNum="40000"
 c_time=10
-buffer=1000
+buffer=1000000
 
 if [ $# -eq 0 ] ; then
 	echo "Host name required as positional argument 1. Aborting";
