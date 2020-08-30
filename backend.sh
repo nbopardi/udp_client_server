@@ -7,9 +7,9 @@ helpFunction()
 {
    echo ""
    echo "Usage: $0 -port portNum -rh_time readHeaderTime -w_time writeTime"
-   echo "\t-port Port number of the HTTP backend server (i.e. 80)"
-   echo "\t-rh_time Max number of seconds the HTTP backend server entire will spend reading the headers of the request (i.e. 20)"
-   echo "\t-w_time Max number of seconds the HTTP backend server will wait before timing out writes of the response (i.e. 20)"
+   echo "\t-port Port number of the HTTP backend server (default: 80)"
+   echo "\t-rh_time Max number of seconds the HTTP backend server entire will spend reading the headers of the request (default: 20)"
+   echo "\t-w_time Max number of seconds the HTTP backend server will wait before timing out writes of the response (default: 20)"
    exit 1 # Exit script after printing help
 }
 
