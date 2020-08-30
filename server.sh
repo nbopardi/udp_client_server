@@ -105,5 +105,5 @@ else
 	done
 
 	# Run udp_server.go with positional args
-	go run ./udp_server.go -backend_host="$b_host" -backend_port="b_port" -port="$portNum" -w_time="$w_time" -r_time="$r_time" -n_jobs="$n_jobs" -ec_time="$ec_time" -rh_time="$rh_time" -ic_time="$ic_time" -iconn_host="$iconn_host" -buffer="$buffer"
+	go run ./udp_server.go -backend_host="$b_host" -backend_port="$b_port" -port="$portNum" -w_time="$w_time" -r_time="$r_time" -n_jobs="$n_jobs" -ec_time="$ec_time" -rh_time="$rh_time" -ic_time="$ic_time" -iconn_host="$iconn_host" -buffer="$buffer"
 fi
