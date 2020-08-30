@@ -57,8 +57,6 @@ sysctl -w net.ipv4.route.flush=1
 echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse
 echo 5 > /proc/sys/net/ipv4/tcp_fin_timeout
 
-# Increase all params to max
-ulimit -u unlimited
 # Increase max number of open files to 614400
 prlimit --pid=$PPID --nofile=614400
 
