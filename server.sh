@@ -83,9 +83,9 @@ else
 	echo 5 > /proc/sys/net/ipv4/tcp_fin_timeout
 
 	# Increase all params to max
-	(ulimit -u unlimited)
+	ulimit -u unlimited
 	# Increase max number of open files to 614400
-	(ulimit -n 614400)
+	prlimit --pid=$PPID --nofile=614400
 
 	# Parse through command line args
 	while [ "$#" -gt 0 ]; do
