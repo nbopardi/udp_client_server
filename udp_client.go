@@ -55,9 +55,10 @@ func sendMessages(conn *net.UDPConn, writeOut chan<- uint32, packetsSentCounter 
 }
 
 // Receives packets from a server using the given UDP connection
+// Packets contain a fnv1a hash of the packet's original payload appended to the end
 // Writes packets to a channel for checking which packets have been received from the server
 // This process stops after the connection times out
-func receiveMessages(conn *net.UDPConn, readTimeLimit time.Duration, recvOut chan<- []byte, wg *sync.WaitGroup) {
+func receiveMessages(conn *net.UDPConn, recvOut chan<- []byte, wg *sync.WaitGroup) {
 	// Close wait group when done
 	defer wg.Done()
 
@@ -66,14 +67,8 @@ func receiveMessages(conn *net.UDPConn, readTimeLimit time.Duration, recvOut cha
 	receiveLoop:
 		for {
 			// Create buffer to read packet into
-			// buffer := make([]byte, 100)
+			// 100 bytes for original payload + 8 bytes for the hash
 			buffer := make([]byte, 108)
-
-			// Set a deadline for how long should wait for server response
-			err := conn.SetReadDeadline(time.Now().Add(readTimeLimit))
-			if err != nil {
-				log.Println("Could not set read deadline for connection: ", err)
-			}
 
 			// Read the packet and place the payload in buffer
 			n, _, err := conn.ReadFromUDP(buffer)
@@ -86,7 +81,6 @@ func receiveMessages(conn *net.UDPConn, readTimeLimit time.Duration, recvOut cha
 					break receiveLoop
 				}
 				log.Fatal("Could not read from UDP server:", err)
-
 			} else {
 				// Send the packet to the received out channel
 				recvOut <- buffer[:n]
@@ -137,8 +131,8 @@ func countWrittenRecv(recvIn <-chan []byte, set map[uint32]bool, setMutex *sync.
 				} else {
 					// Verify the packet is greater than 100 bytes in length
 					// The fnv1a hash is 8 bytes, which should be appended to the packet's original payload
-					if len(packet) <= 100 {
-						log.Printf("Packet is not 108 in length: %v\n", packet)
+					if len(packet) < 108 {
+						log.Printf("Packet is less than 108 bytes in length: %v\n", packet)
 					} else {
 						// Create uint32 of packet (take only first 100 bytes of packet for comparison)
 						intPacket := binary.LittleEndian.Uint32(packet[:100])
@@ -174,7 +168,6 @@ func main() {
 	var hostName = flag.String("host", "localhost", "IPv4 of host to connect to (i.e. 169.254.105.13)")
 	var portNum = flag.String("port", "40000", "Port number of host to connect to (i.e. 40000)")
 	var cTimeLimit = flag.Int("c_time", 1, "Number of minutes the connection with the server will stay alive for (i.e. 1)")
-	var rTimeLimit = flag.Int("r_time", 500, "Max number of milliseconds the client will attempt to spend waiting to read from server (i.e. 500)")
 	var chanCap = flag.Int("buffer", 1000, "The max buffer size of the channels used to record packets sent and received (i.e. 1000)")
 	flag.Parse()
 
@@ -219,14 +212,11 @@ func main() {
 	readChan := make(chan []byte, *chanCap)
 
 	// Set a time limit for how long the connection will stay alive
-	totalTimeLimit := (time.Duration(*cTimeLimit) * time.Minute)
+	totalTimeLimit := time.Duration(*cTimeLimit) * time.Minute
 	err = conn.SetDeadline(time.Now().Add(totalTimeLimit))
 	if err != nil {
 		log.Fatal("Could not set deadline for connection: ", err)
 	}
-
-	// Set a reading time limit for how long to wait for response from server
-	readTimeLimit := (time.Duration(*rTimeLimit) * time.Millisecond)
 
 	// Create waitgroup to wait for all goroutines to finish before terminating
 	var wg sync.WaitGroup
@@ -234,7 +224,7 @@ func main() {
 
 	// Call these goroutines to handle sending and receiving packets to server
 	go sendMessages(conn, writeChan, &packetsSentCounter, &wg)
-	go receiveMessages(conn, readTimeLimit, readChan, &wg)
+	go receiveMessages(conn, readChan, &wg)
 	// Call these goroutines to handle counting number of packets sent and received from server
 	go countWritten(writeChan, set, setMutex, &wg)
 	go countWrittenRecv(readChan, set, setMutex, &packetsRecvCounter, &packetsRecvButNotSentCounter, &wg)
